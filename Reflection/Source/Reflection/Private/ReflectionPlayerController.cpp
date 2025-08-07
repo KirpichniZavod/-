@@ -10,6 +10,11 @@ AReflectionPlayerController::AReflectionPlayerController()
 {
     bPauseMenuVisible = false;
     bShowMouseCursor = false;
+
+    // Default UI classes (no Blueprint needed)
+    InteractPromptClass = UInteractPromptWidget::StaticClass();
+    PauseMenuClass = UPauseMenuWidget::StaticClass();
+    DialogueWidgetClass = UDialogueWidget::StaticClass();
 }
 
 void AReflectionPlayerController::BeginPlay()
@@ -87,7 +92,6 @@ void AReflectionPlayerController::HidePauseMenu()
 
 void AReflectionPlayerController::HandleQuitRequested()
 {
-    // Закрыть игру с подтверждением можно добавить позже
     UKismetSystemLibrary::QuitGame(this, this, EQuitPreference::Quit, false);
 }
 

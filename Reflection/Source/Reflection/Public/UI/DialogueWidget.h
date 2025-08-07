@@ -4,6 +4,9 @@
 #include "Blueprint/UserWidget.h"
 #include "DialogueWidget.generated.h"
 
+class UTextBlock;
+class UVerticalBox;
+class UButton;
 class UDialogueDataAsset;
 
 UCLASS()
@@ -12,6 +15,8 @@ class REFLECTION_API UDialogueWidget : public UUserWidget
     GENERATED_BODY()
 
 public:
+    virtual void NativeConstruct() override;
+
     UFUNCTION(BlueprintCallable, Category = "Dialogue")
     void OpenDialogue(UDialogueDataAsset* DialogueData, int32 StartIndex);
 
@@ -27,11 +32,20 @@ protected:
 
     int32 CurrentIndex = INDEX_NONE;
 
-    UFUNCTION(BlueprintImplementableEvent, Category = "Dialogue")
-    void BP_ShowLine(const FText& Speaker, const FText& Text, const TArray<FText>& Choices);
+    UPROPERTY(Transient)
+    UVerticalBox* RootBox;
 
-    UFUNCTION(BlueprintImplementableEvent, Category = "Dialogue")
-    void BP_OnDialogueClosed();
+    UPROPERTY(Transient)
+    UTextBlock* SpeakerText;
+
+    UPROPERTY(Transient)
+    UTextBlock* LineText;
+
+    UPROPERTY(Transient)
+    UVerticalBox* ChoicesBox;
+
+    UFUNCTION()
+    void OnChoiceClicked(int32 Index);
 
     void Refresh();
 };
