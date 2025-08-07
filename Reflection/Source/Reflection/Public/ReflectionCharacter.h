@@ -14,6 +14,7 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    virtual void Tick(float DeltaSeconds) override;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     class UCameraComponent* FirstPersonCamera;
@@ -39,8 +40,10 @@ protected:
     UFUNCTION()
     void ToggleMenu();
 
-    void PerformInteractTrace();
+    void PerformInteractTrace(bool bForHover);
     void TryInteractWith(AActor* HitActor);
+
+    TWeakObjectPtr<AActor> HoveredActor;
 
 public:
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;

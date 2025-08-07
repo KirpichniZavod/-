@@ -5,10 +5,11 @@
 #include "Kismet/GameplayStatics.h"
 #include "Interactable.h"
 #include "DrawDebugHelpers.h"
+#include "ReflectionPlayerController.h"
 
 AReflectionCharacter::AReflectionCharacter()
 {
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true;
 
     GetCapsuleComponent()->InitCapsuleSize(42.f, 96.f);
 
@@ -19,7 +20,7 @@ AReflectionCharacter::AReflectionCharacter()
 
     bUseControllerRotationYaw = true;
     GetCharacterMovement()->bOrientRotationToMovement = false;
-    GetCharacterMovement()->MaxWalkSpeed = 300.f; // базовая ходьба
+    GetCharacterMovement()->MaxWalkSpeed = 300.f;
 
     InteractTraceDistance = 250.f;
 }
@@ -27,6 +28,12 @@ AReflectionCharacter::AReflectionCharacter()
 void AReflectionCharacter::BeginPlay()
 {
     Super::BeginPlay();
+}
+
+void AReflectionCharacter::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+    PerformInteractTrace(true);
 }
 
 void AReflectionCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -66,10 +73,10 @@ void AReflectionCharacter::LookUp(float Value)
 
 void AReflectionCharacter::Interact()
 {
-    PerformInteractTrace();
+    PerformInteractTrace(false);
 }
 
-void AReflectionCharacter::PerformInteractTrace()
+void AReflectionCharacter::PerformInteractTrace(bool bForHover)
 {
     const FVector Start = FirstPersonCamera->GetComponentLocation();
     const FVector End = Start + FirstPersonCamera->GetForwardVector() * InteractTraceDistance;
@@ -79,12 +86,36 @@ void AReflectionCharacter::PerformInteractTrace()
     const bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params);
 
 #if !(UE_BUILD_SHIPPING)
-    DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.0f, 0, 0.5f);
+    DrawDebugLine(GetWorld(), Start, End, bHit ? FColor::Yellow : FColor::Green, false, 0.0f, 0, 0.25f);
 #endif
 
-    if (bHit && Hit.GetActor())
+    AActor* NewHovered = bHit ? Hit.GetActor() : nullptr;
+
+    if (bForHover)
     {
-        TryInteractWith(Hit.GetActor());
+        if (HoveredActor.Get() != NewHovered)
+        {
+            HoveredActor = NewHovered;
+            AReflectionPlayerController* PC = Cast<AReflectionPlayerController>(GetController());
+            if (PC)
+            {
+                if (NewHovered && NewHovered->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+                {
+                    const FText Name = IInteractable::Execute_GetDisplayName(NewHovered);
+                    PC->ShowInteractPrompt(Name.IsEmpty() ? FText::FromString(TEXT("Нажмите E, чтобы взаимодействовать")) : Name);
+                }
+                else
+                {
+                    PC->HideInteractPrompt();
+                }
+            }
+        }
+        return;
+    }
+
+    if (bHit && NewHovered)
+    {
+        TryInteractWith(NewHovered);
     }
 }
 
@@ -100,6 +131,8 @@ void AReflectionCharacter::TryInteractWith(AActor* HitActor)
 
 void AReflectionCharacter::ToggleMenu()
 {
-    const bool bNewPaused = !UGameplayStatics::IsGamePaused(this);
-    UGameplayStatics::SetGamePaused(this, bNewPaused);
+    if (AReflectionPlayerController* PC = Cast<AReflectionPlayerController>(GetController()))
+    {
+        PC->TogglePauseMenu();
+    }
 }

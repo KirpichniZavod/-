@@ -1,9 +1,9 @@
 #include "ReflectionGameMode.h"
 #include "ReflectionCharacter.h"
-#include "GameFramework/PlayerController.h"
+#include "ReflectionPlayerController.h"
 
 AReflectionGameMode::AReflectionGameMode()
 {
     DefaultPawnClass = AReflectionCharacter::StaticClass();
-    PlayerControllerClass = APlayerController::StaticClass();
+    PlayerControllerClass = AReflectionPlayerController::StaticClass();
 }
